@@ -1,9 +1,9 @@
 #include <cmath>
-#include "naive.hpp"
+#include "prime_counter.hpp"
 
-namespace naive {
+namespace prime_counter {
 
-result::result prime_count(const uint64_t n) {
+result::result naive(const uint64_t n) {
   std::vector<bool> is_prime(n+1, true);
   is_prime[0] = is_prime[1] = false;
   uint64_t sqrt_n = sqrt(n+1);
@@ -17,4 +17,4 @@ result::result prime_count(const uint64_t n) {
   return res;
 }
 
-} // namespace naive
+} // namespace prime_counter 

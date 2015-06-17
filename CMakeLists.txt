@@ -5,4 +5,5 @@ add_executable(prc
   main.cpp
   utils.cpp
   naive.cpp
+  opti_for_2.cpp
 )
