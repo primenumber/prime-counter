@@ -10,3 +10,5 @@ void output_result(const result::result &res) {
     printf("%d\n", cnt);
   }
 }
+
+} // namespace utils
