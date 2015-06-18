@@ -6,4 +6,5 @@ add_executable(prc
   utils.cpp
   naive.cpp
   opti_for_2.cpp
+  sieve_of_atkin.cpp
 )
