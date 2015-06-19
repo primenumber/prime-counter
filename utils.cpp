@@ -1,13 +1,15 @@
 #include "utils.hpp"
 
 #include <cstdio>
+#include <cstdint>
+#include <cinttypes>
 
 namespace utils {
 
 void output_result(const result::result &res) {
-  printf("%d %d\n", res.n, res.interval_size);
+  printf("%" PRIu64 " %" PRIu64 "\n", res.n, res.interval_size);
   for (uint64_t cnt : res.count) {
-    printf("%d\n", cnt);
+    printf("%" PRIu64 "\n", cnt);
   }
 }
 
