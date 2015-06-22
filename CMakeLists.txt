@@ -9,3 +9,4 @@ add_executable(prc
   sieve_of_atkin.cpp
   sieve_of_atkin_interval.cpp
 )
+target_link_libraries(prc pthread)

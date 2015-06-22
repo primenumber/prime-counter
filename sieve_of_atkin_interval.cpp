@@ -2,8 +2,12 @@
 #include <cmath>
 #include <algorithm>
 #include <functional>
+#include <mutex>
+#include <thread>
 #include <tuple>
 #include <vector>
+
+#include <boost/dynamic_bitset.hpp>
 
 namespace prime_counter {
 
@@ -107,7 +111,7 @@ std::vector<uint64_t> prime_list_under_interval(const uint64_t n) {
   return res;
 }
 
-void sieve3_impl(std::vector<bool> &bit_ary,
+void sieve3_impl(boost::dynamic_bitset<> &bit_ary,
     int64_t f, int64_t g,
     uint64_t L, uint64_t B) {
   int64_t x = f, y0 = g;
@@ -125,7 +129,7 @@ void sieve3_impl(std::vector<bool> &bit_ary,
     if (brk) break;
     int64_t k = k0, y = y0;
     while (k >= (int64_t)L && y < x) {
-      bit_ary[k-L] = !bit_ary[k-L];
+      bit_ary.flip(k-L);
       k -= (2*y + 60)*60;
       y += 60;
     }
@@ -135,7 +139,7 @@ void sieve3_impl(std::vector<bool> &bit_ary,
 }
 
 template <int a, int b>
-void sieve_impl(std::vector<bool> &bit_ary,
+void sieve_impl(boost::dynamic_bitset<> &bit_ary,
     int64_t f, int64_t g,
     uint64_t L, uint64_t B) {
   int64_t x = f, y0 = g;
@@ -154,14 +158,14 @@ void sieve_impl(std::vector<bool> &bit_ary,
     }
     int64_t k = k0, y = y0;
     while (k < (int64_t)(L+B)) {
-      bit_ary[k-L] = !bit_ary[k-L];
+      bit_ary.flip(k-L);
       k += b*(2*y + 60)*60;
       y += 60;
     }
   }
 }
 
-void sieve1(std::vector<bool> &bit_ary, const eq_ans &ans,
+void sieve1(boost::dynamic_bitset<> &bit_ary, const eq_ans &ans,
     uint64_t L, uint64_t B) {
   for (auto sp_ans : ans) {
     int64_t f, g;
@@ -170,7 +174,7 @@ void sieve1(std::vector<bool> &bit_ary, const eq_ans &ans,
   }
 }
 
-void sieve2(std::vector<bool> &bit_ary, const eq_ans &ans,
+void sieve2(boost::dynamic_bitset<> &bit_ary, const eq_ans &ans,
     uint64_t L, uint64_t B) {
   for (auto sp_ans : ans) {
     int64_t f, g;
@@ -179,7 +183,7 @@ void sieve2(std::vector<bool> &bit_ary, const eq_ans &ans,
   }
 }
 
-void sieve3(std::vector<bool> &bit_ary, const eq_ans &ans,
+void sieve3(boost::dynamic_bitset<> &bit_ary, const eq_ans &ans,
     uint64_t L, uint64_t B) {
   for (auto sp_ans : ans) {
     int64_t f, g;
@@ -188,7 +192,7 @@ void sieve3(std::vector<bool> &bit_ary, const eq_ans &ans,
   }
 }
 
-void sieve_non_squarefree(std::vector<bool> &bit_ary, uint64_t L, uint64_t B,
+void sieve_non_squarefree(boost::dynamic_bitset<> &bit_ary, uint64_t L, uint64_t B,
     const std::vector<uint64_t> &primes) {
   for (uint64_t p : primes) {
     uint64_t psq = p*p;
@@ -197,15 +201,15 @@ void sieve_non_squarefree(std::vector<bool> &bit_ary, uint64_t L, uint64_t B,
       uint64_t r = L % psq;
       uint64_t s = r ? (psq - r) : 0;
       for (; s < B; s += psq)
-        bit_ary[s] = false;
+        bit_ary.set(s, false);
     }
   }
 }
 
-std::vector<bool> sieve_interval(const uint64_t L, const uint64_t B,
+boost::dynamic_bitset<> sieve_interval(const uint64_t L, const uint64_t B,
     const std::vector<eq_ans> &eq_ans_list,
     const std::vector<uint64_t> &primes) {
-  std::vector<bool> bit_ary(B, false);
+  boost::dynamic_bitset<> bit_ary(B);
   sieve1(bit_ary, eq_ans_list[0], L, B);
   sieve2(bit_ary, eq_ans_list[1], L, B);
   sieve3(bit_ary, eq_ans_list[2], L, B);
@@ -228,7 +232,7 @@ std::vector<uint64_t> prime_list(const uint64_t n) {
     auto bit_ary = sieve_interval(L, B, eq_ans_list, primes);
     for (uint64_t i = 0; i < B; ++i) {
       if (L + i > n) break;
-      if (bit_ary[i]) {
+      if (bit_ary.test(i)) {
         int r = (L + i) % 12;
         int rs[] = {1, 5, 7, 11};
         for (int j = 0; j < 4; ++j) {
@@ -240,22 +244,18 @@ std::vector<uint64_t> prime_list(const uint64_t n) {
   return res;
 }
 
+std::mutex mtx;
+
 void count_interval(const uint64_t L, const uint64_t B, const uint64_t n,
-    std::vector<eq_ans> &eq_ans_list, std::vector<uint64_t> &primes,
-    std::vector<uint64_t> &count) {
-  auto bit_ary = sieve_interval(L, B, eq_ans_list, primes);
+    const std::vector<eq_ans> &eq_ans_list, const std::vector<uint64_t> &primes,
+    std::vector<uint64_t> &count, const boost::dynamic_bitset<> &mask) {
+  auto bit_ary = sieve_interval(L, B, eq_ans_list, primes) & mask;
   uint64_t sum = (L < B) ? 3 : 0;
-  for (uint64_t i = 0; i < B; ++i) {
-    if (L + i > n) break;
-    if (bit_ary[i]) {
-      int r = (L + i) % 12;
-      int rs[] = {1, 5, 7, 11};
-      for (int j = 0; j < 4; ++j) {
-        if (r == rs[j]) ++sum;
-      }
-    }
-  }
+  bit_ary.resize(std::min(B, n - L + 1));
+  sum += bit_ary.count();
+  mtx.lock();
   count[L/B] = sum;
+  mtx.unlock();
 }
 
 result::result sieve_of_atkin_interval(const uint64_t n) {
@@ -266,9 +266,26 @@ result::result sieve_of_atkin_interval(const uint64_t n) {
   for (auto func : solve_mod_eq)
     eq_ans_list.emplace_back(func());
   result::result res(n, B);
-  for (uint64_t L = 1; L <= n; L += B) {
-    count_interval(L, B, n, eq_ans_list, primes, res.count);
+  boost::dynamic_bitset<> mask(B);
+  for (uint64_t i = 0; i < B; ++i) {
+    switch((1+i) % 12) {
+      case 1:
+      case 5:
+      case 7:
+      case 11:
+        mask.set(i);
+    }
   }
+  std::vector<std::thread> th;
+  const int thread_num = 8;
+  for (uint64_t i = 0; i < thread_num; ++i) {
+    th.emplace_back(std::thread([&,i=i]{
+      for (uint64_t L = 1 + B*i; L <= n; L += B*thread_num) {
+        count_interval(L, B, n, eq_ans_list, primes, res.count, mask);
+      }
+    }));
+  }
+  for (auto &t : th) t.join();
   return res;
 }
 
