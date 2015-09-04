@@ -116,15 +116,22 @@ result::result sieve_of_atkin_interval(const uint64_t n) {
   std::vector<std::thread> th;
   const int thread_num = std::thread::hardware_concurrency();
   std::cerr << thread_num << " threads" << std::endl;
-  for (uint64_t i = 0; i < thread_num; ++i) {
-    th.emplace_back(std::thread([&,i=i]{
-      for (uint64_t L = 1 + B*i; L <= n; L += B*thread_num) {
-        std::cerr << L << std::endl;
-        count_interval(L, B, n, primes, res.count, mask, sqn);
-      }
-    }));
+  if (thread_num > 1) {
+    for (uint64_t i = 0; i < thread_num; ++i) {
+      th.emplace_back(std::thread([&,i=i]{
+        for (uint64_t L = 1 + B*i; L <= n; L += B*thread_num) {
+          std::cerr << L << std::endl;
+          count_interval(L, B, n, primes, res.count, mask, sqn);
+        }
+      }));
+    }
+    for (auto &t : th) t.join();
+  } else {
+    for (uint64_t L = 1; L <= n; L += B) {
+      std::cerr << L << std::endl;
+      count_interval(L, B, n, primes, res.count, mask, sqn);
+    }
   }
-  for (auto &t : th) t.join();
   return res;
 }
 
