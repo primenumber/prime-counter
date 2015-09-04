@@ -1,11 +1,12 @@
 #pragma once
 #include <vector>
 #include <boost/dynamic_bitset.hpp>
+#include "bitarray.hpp"
 
 namespace prime_counter {
 
 using eq_ans = std::vector<std::tuple<int64_t, int64_t>>;
-using bit_ary_t = boost::dynamic_bitset<>;
+using bit_ary_t = bitarray;
 
 void init_sieve1();
 void init_sieve2();
