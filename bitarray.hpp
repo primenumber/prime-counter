@@ -38,8 +38,8 @@ class bitarray {
   }
   std::size_t count(std::size_t first, std::size_t last) const {
     std::size_t sum = 0;
-    sum += data[lower_index(first)] & (~0 << first & 0x3F);
-    sum += data[lower_index(last)] & (~0 >> (63-(first & 0x3F)));
+    sum += popcount(data[lower_index(first)] & (~0 << first & 0x3F));
+    sum += popcount(data[lower_index(last)] & (~0 >> (63-(first & 0x3F))));
     for (std::size_t i = upper_index(first); i < lower_index(last); ++i) {
       sum += popcount(data[i]);
     }
