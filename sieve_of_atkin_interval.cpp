@@ -27,7 +27,7 @@ std::vector<uint64_t> prime_list_under_interval(const uint64_t n) {
   return res;
 }
 
-void sieve_non_squarefree(boost::dynamic_bitset<> &bit_ary, uint64_t L, uint64_t B,
+void sieve_non_squarefree(bit_ary_t &bit_ary, uint64_t L, uint64_t B,
     const std::vector<uint64_t> &primes) {
   for (uint64_t p : primes) {
     uint64_t psq = p*p;
@@ -41,9 +41,9 @@ void sieve_non_squarefree(boost::dynamic_bitset<> &bit_ary, uint64_t L, uint64_t
   }
 }
 
-boost::dynamic_bitset<> sieve_interval(const uint64_t L, const uint64_t B,
+bit_ary_t sieve_interval(const uint64_t L, const uint64_t B,
     const std::vector<uint64_t> &primes) {
-  boost::dynamic_bitset<> bit_ary(B);
+  bit_ary_t bit_ary(B);
   sieve1(bit_ary, L, B);
   sieve2(bit_ary, L, B);
   sieve3(bit_ary, L, B);
@@ -81,14 +81,14 @@ std::mutex mtx;
 
 void count_interval(const uint64_t L, const uint64_t B, const uint64_t n,
     const std::vector<uint64_t> &primes, std::vector<uint64_t> &count,
-    const boost::dynamic_bitset<> &mask, const uint64_t sqn) {
+    const bit_ary_t &mask, const uint64_t sqn) {
   auto bit_ary = sieve_interval(L, B, primes) & mask;
   std::vector<int64_t> count_sub(interval_size, 0);
   if (L <= 2 && L+B >= 2) bit_ary.set(2-L);
   if (L <= 3 && L+B >= 3) bit_ary.set(3-L);
   if (L <= 5 && L+B >= 5) bit_ary.set(5-L);
-  for (int64_t i = 0; i < B && L+i <= n; ++i) {
-    if (bit_ary.test(i)) count_sub[i/sqn]++;
+  for (int64_t i = 0; i < interval_size && L+i*sqn <= n; ++i) {
+    count_sub[i] = bit_ary.count(i*sqn, std::min(n-L+1, (i+1)*sqn));
   }
   mtx.lock();
   for (int64_t i = 0; i < interval_size && L+i*sqn <= n; ++i)
@@ -102,7 +102,7 @@ result::result sieve_of_atkin_interval(const uint64_t n) {
   auto primes = prime_list(sqn);
   std::vector<eq_ans> eq_ans_list;
   init_sieve();
-  boost::dynamic_bitset<> mask(B);
+  bit_ary_t mask(B);
   for (uint64_t i = 0; i < B; ++i) {
     switch((1+i) % 12) {
       case 1:
