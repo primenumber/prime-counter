@@ -7,7 +7,7 @@ namespace prime_counter {
 eq_ans ans_1;
 
 void init_sieve1() {
-  ans_1 = solve_mod<4, 1, 4, 1>();
+  ans_1 = solve_mod<4, 1, 4, 1, 15, 30>();
 }
 
 void sieve1_impl(bit_ary_t &bit_ary, const uint64_t L, const uint64_t B,
@@ -15,22 +15,22 @@ void sieve1_impl(bit_ary_t &bit_ary, const uint64_t L, const uint64_t B,
   int64_t x = f, y0 = g;
   int64_t k0 = 4*f*f + g*g;
   while (k0 < (int64_t)(L+B)) {
-    k0 += 480*x + 14400;
-    x += 60;
+    k0 += 120*x + 900;
+    x += 15;
   }
   while (true) {
-    x -= 60;
-    k0 -= 480*x + 14400;
+    x -= 15;
+    k0 -= 120*x + 900;
     if (x <= 0) break;
     while (k0 < (int64_t)L) {
-      k0 += 120*y0 + 3600;
-      y0 += 60;
+      k0 += 60*y0 + 900;
+      y0 += 30;
     }
     int64_t k = k0, y = y0;
     while (k < (int64_t)(L+B)) {
       bit_ary.flip(k-L);
-      k += 120*y + 3600;
-      y += 60;
+      k += 60*y + 900;
+      y += 30;
     }
   }
 }

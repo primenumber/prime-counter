@@ -15,7 +15,8 @@ void sieve1(bit_ary_t &bit_ary, const uint64_t L, const uint64_t B);
 void sieve2(bit_ary_t &bit_ary, const uint64_t L, const uint64_t B);
 void sieve3(bit_ary_t &bit_ary, const uint64_t L, const uint64_t B);
 
-template <int64_t a, int64_t b, int64_t MOD, int64_t REM>
+template <int64_t a, int64_t b, int64_t MOD, int64_t REM,
+         int64_t xrange, int64_t yrange>
 eq_ans solve_mod() {
   std::vector<int64_t> rems;
   for (int64_t i = 0; i < 60; ++i) {
@@ -23,8 +24,8 @@ eq_ans solve_mod() {
     if ((i % MOD) == REM) rems.push_back(i);
   }
   eq_ans res;
-  for (int64_t x = 0; x < 60; ++x) {
-    for (int64_t y = 0; y < 60; ++y) {
+  for (int64_t x = 0; x < xrange; ++x) {
+    for (int64_t y = 0; y < yrange; ++y) {
       int64_t k = (a*x*x + b*y*y + (abs(a) + abs(b)) * 3600) % 60;
       for (int64_t r : rems) {
         if (k == r) {
